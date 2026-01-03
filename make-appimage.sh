@@ -27,7 +27,21 @@ quick-sharun \
 	/usr/bin/podman*    \
 	/usr/lib/podman
 
-# Additional changes can be done in between here
+# crun gets broken when used with sharun
+# Failed to check ELF class: /memfd:crun_cloned:/proc/self/shared/bin/exe (deleted): No such file or directory (os error 2)
+# we will have to do some hacks to get it to work
+kek=.$(tr -dc 'A-Za-z0-9_=-' < /dev/urandom | head -c 10)
+rm -f ./AppDir/bin/crun                 ./AppDir/shared/bin/crun
+cp -v /usr/bin/crun                     ./AppDir/bin/crun.wrapped
+patchelf --set-interpreter /tmp/"$kek"  ./AppDir/bin/crun.wrapped
+patchelf --set-rpath '$ORIGIN/../lib'   ./AppDir/bin/crun.wrapped
+
+cat <<EOF > ./AppDir/bin/crun
+#!/bin/sh
+cp -f "\$APPDIR"/shared/lib/ld-linux*.so* /tmp/"$kek"
+exec "\$APPDIR"/bin/crun.wrapped "\$@"
+EOF
+chmod +x ./AppDir/bin/crun*
 
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
