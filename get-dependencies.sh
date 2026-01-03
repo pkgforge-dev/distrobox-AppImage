@@ -6,7 +6,7 @@ ARCH=$(uname -m)
 
 echo "Installing package dependencies..."
 echo "---------------------------------------------------------------"
-pacman -Syu --noconfirm podman
+pacman -Syu --noconfirm distrobox podman
 
 #echo "Installing debloated packages..."
 #echo "---------------------------------------------------------------"
