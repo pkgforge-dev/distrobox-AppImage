@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# for some reason this fails to work when FUSE or unshare is in use: 
+# Error: default OCI runtime "crun" not found: invalid argument
+# so we will have to copy the binaries outside FUSE before running them
+
+WORKAROUND_PATH="${XDG_CACHE_HOME:-$HOME/.cache}"/distrobox-appimage
+
+mkdir -p "$WORKAROUND_PATH"
+cp -r "$CURRENTDIR"/bin    "$WORKAROUND_PATH"
+cp "$CURRENTDIR"/sharun    "$WORKAROUND_PATH"
+cp "$CURRENTDIR"/.env      "$WORKAROUND_PATH" 2>/dev/null || :
+cp "$CURRENTDIR"/.preload  "$WORKAROUND_PATH" 2>/dev/null || :
+
+ln -sfn "$CURRENTDIR"/lib     "$WORKAROUND_PATH"/lib
+ln -sfn "$CURRENTDIR"/share   "$WORKAROUND_PATH"/share
+ln -sfn "$CURRENTDIR"/shared  "$WORKAROUND_PATH"/shared
+ln -sfn "$CURRENTDIR"/etc     "$WORKAROUND_PATH"/etc 2>/dev/null || :
+
+# override CURRENTDIR now so that the AppRun launches the right binaries
+CURRENTDIR="$WORKAROUND_PATH"
