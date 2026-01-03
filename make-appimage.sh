@@ -15,6 +15,7 @@ export MAIN_BIN=distrobox
 # Deploy dependencies
 quick-sharun \
 	/usr/bin/distrobox* \
+	/usr/bin/conmon     \
 	/usr/bin/podman*    \
 	/usr/lib/podman
 
