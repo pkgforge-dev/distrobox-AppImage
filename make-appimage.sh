@@ -11,6 +11,7 @@ export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}
 export ICON=/usr/share/icons/hicolor/128x128/apps/terminal-distrobox-icon.png
 export DESKTOP=DUMMY
 export MAIN_BIN=distrobox
+export DEPLOY_SYS_PYTHON=1
 
 # Deploy dependencies
 quick-sharun \
@@ -18,6 +19,10 @@ quick-sharun \
 	/usr/bin/conmon     \
 	/usr/bin/crun       \
 	/usr/bin/krun       \
+	/usr/bin/compel     \
+	/usr/bin/crit       \
+	/usr/bin/criu       \
+	/usr/bin/criu-ns    \
 	/usr/bin/podman*    \
 	/usr/lib/podman
 
