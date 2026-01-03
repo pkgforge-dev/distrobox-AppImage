@@ -16,6 +16,8 @@ export MAIN_BIN=distrobox
 quick-sharun \
 	/usr/bin/distrobox* \
 	/usr/bin/conmon     \
+	/usr/bin/crun       \
+	/usr/bin/krun       \
 	/usr/bin/podman*    \
 	/usr/lib/podman
 
