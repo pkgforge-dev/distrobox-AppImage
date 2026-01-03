@@ -34,12 +34,11 @@ kek=.$(tr -dc 'A-Za-z0-9_=-' < /dev/urandom | head -c 10)
 rm -f ./AppDir/bin/crun                 ./AppDir/shared/bin/crun
 cp -v /usr/bin/crun                     ./AppDir/bin/crun.wrapped
 patchelf --set-interpreter /tmp/"$kek"  ./AppDir/bin/crun.wrapped
-patchelf --set-rpath '$ORIGIN/../lib'   ./AppDir/bin/crun.wrapped
-
 cat <<EOF > ./AppDir/bin/crun
 #!/bin/sh
 cp -f "\$APPDIR"/shared/lib/ld-linux*.so* /tmp/"$kek"
-exec "\$APPDIR"/bin/crun.wrapped "\$@"
+export LD_LIBRARY_PATH="\$APPDIR"/shared/lib
+exec "\$APPDIR"/sharun crun.wrapped "\$@"
 EOF
 chmod +x ./AppDir/bin/crun*
 
