@@ -12,6 +12,7 @@ export ICON=/usr/share/icons/hicolor/128x128/apps/terminal-distrobox-icon.png
 export DESKTOP=DUMMY
 export MAIN_BIN=distrobox
 export DEPLOY_SYS_PYTHON=1
+export ANYLINUX_LIB=1
 export PATH_MAPPING='/usr/bin/distrobox*:${SHARUN_DIR}/bin/distrobox*'
 
 # Deploy dependencies
