@@ -7,15 +7,15 @@
 WORKAROUND_PATH="${XDG_CACHE_HOME:-$HOME/.cache}"/distrobox-appimage
 
 mkdir -p "$WORKAROUND_PATH"
-cp -r "$CURRENTDIR"/bin    "$WORKAROUND_PATH"
-cp "$CURRENTDIR"/sharun    "$WORKAROUND_PATH"
-cp "$CURRENTDIR"/.env      "$WORKAROUND_PATH" 2>/dev/null || :
-cp "$CURRENTDIR"/.preload  "$WORKAROUND_PATH" 2>/dev/null || :
+cp -r "$APPDIR"/bin    "$WORKAROUND_PATH"
+cp "$APPDIR"/sharun    "$WORKAROUND_PATH"
+cp "$APPDIR"/.env      "$WORKAROUND_PATH" 2>/dev/null || :
+cp "$APPDIR"/.preload  "$WORKAROUND_PATH" 2>/dev/null || :
 
-ln -sfn "$CURRENTDIR"/lib     "$WORKAROUND_PATH"/lib
-ln -sfn "$CURRENTDIR"/share   "$WORKAROUND_PATH"/share
-ln -sfn "$CURRENTDIR"/shared  "$WORKAROUND_PATH"/shared
-ln -sfn "$CURRENTDIR"/etc     "$WORKAROUND_PATH"/etc 2>/dev/null || :
+ln -sfn "$APPDIR"/lib     "$WORKAROUND_PATH"/lib
+ln -sfn "$APPDIR"/share   "$WORKAROUND_PATH"/share
+ln -sfn "$APPDIR"/shared  "$WORKAROUND_PATH"/shared
+ln -sfn "$APPDIR"/etc     "$WORKAROUND_PATH"/etc 2>/dev/null || :
 
-# override CURRENTDIR now so that the AppRun launches the right binaries
-CURRENTDIR="$WORKAROUND_PATH"
+# override APPDIR now so that the AppRun launches the right binaries
+APPDIR="$WORKAROUND_PATH"
