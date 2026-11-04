@@ -16,4 +16,9 @@ for f in distrobox distrobox-enter; do
 	chmod +x "$DISTROBOX_BIN_DIR/$f"
 done
 
-export CONTAINERS_CONF_OVERRIDE="$APPDIR"/etc/containers/containers.conf
+# podman must read its config from outside the mount too: $APPDIR changes on
+# every update, and a config path that is not there stops every podman call
+if [ -f "$APPDIR"/etc/containers/containers.conf ]; then
+	cp -f "$APPDIR"/etc/containers/containers.conf "$DISTROBOX_BIN_DIR"/containers.conf
+	export CONTAINERS_CONF_OVERRIDE="$DISTROBOX_BIN_DIR"/containers.conf
+fi
