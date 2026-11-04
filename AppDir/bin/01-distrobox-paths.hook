@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# distrobox bind mounts these scripts into every container it creates and puts
+# their paths in the .desktop entries of exported apps, so keep them outside of
+# $APPDIR, which changes on every update
+
+export DISTROBOX_BIN_DIR="$DATADIR"/distrobox-appimage
+
+mkdir -p "$DISTROBOX_BIN_DIR"
+cp -f "$APPDIR"/bin/distrobox-init "$APPDIR"/bin/distrobox-export \
+	"$APPDIR"/bin/distrobox-host-exec "$DISTROBOX_BIN_DIR"
+
+# a copy of these cannot find podman from a desktop entry, launch the AppImage
+for f in distrobox distrobox-enter; do
+	printf '#!/bin/sh\nexec "${APPIMAGE:?}" "${0##*/}" "$@"\n' > "$DISTROBOX_BIN_DIR/$f"
+	chmod +x "$DISTROBOX_BIN_DIR/$f"
+done
+
+export CONTAINERS_CONF_OVERRIDE="$APPDIR"/etc/containers/containers.conf

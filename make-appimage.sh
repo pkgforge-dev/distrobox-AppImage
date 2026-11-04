@@ -6,14 +6,11 @@ ARCH=$(uname -m)
 VERSION=$(pacman -Q distrobox | awk '{print $2; exit}') # example command to get version of application here
 export ARCH VERSION
 export OUTPATH=./dist
-export ADD_HOOKS="self-updater.bg.hook"
+export ADD_HOOKS="self-updater.hook"
 export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
 export ICON=/usr/share/icons/hicolor/128x128/apps/terminal-distrobox-icon.png
 export DESKTOP=DUMMY
 export MAIN_BIN=distrobox
-export DEPLOY_PYTHON=1
-export ANYLINUX_LIB=1
-export PATH_MAPPING='/usr/bin/distrobox*:${SHARUN_DIR}/bin/distrobox*'
 
 # Deploy dependencies
 quick-sharun \
@@ -50,3 +47,7 @@ chmod +x ./AppDir/bin/crun*
 
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
+
+# Test the app for 12 seconds, if the test fails due to the app
+# having issues running in the CI use --simple-test instead
+quick-sharun --simple-test ./dist/*.AppImage
