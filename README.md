@@ -7,7 +7,7 @@
 [![Latest Stable Release](https://img.shields.io/github/v/release/pkgforge-dev/distrobox-AppImage)](https://github.com/pkgforge-dev/distrobox-AppImage/releases/latest)
 
 <p align="center">
-  <img src="https://github.com/89luca89.png" width="128" />
+  <img src="AppDir/distrobox.png" width="128" />
 </p>
 
 
