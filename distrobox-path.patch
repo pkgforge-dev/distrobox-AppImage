@@ -1,0 +1,42 @@
+--- a/usr/bin/distrobox-create
++++ b/usr/bin/distrobox-create
+@@ -92,10 +92,11 @@
+ # We're not using "realpath" here so that symlinks are not resolved this way
+ # "realpath" would break situations like Nix or similar symlink based package
+ # management.
+-distrobox_entrypoint_path="$(cd "$(dirname "${0}")" && pwd)/distrobox-init"
+-distrobox_export_path="$(cd "$(dirname "${0}")" && pwd)/distrobox-export"
+-distrobox_genentry_path="$(cd "$(dirname "${0}")" && pwd)/distrobox-generate-entry"
+-distrobox_hostexec_path="$(cd "$(dirname "${0}")" && pwd)/distrobox-host-exec"
++DISTROBOX_BIN_DIR=${DISTROBOX_BIN_DIR:-"$(cd "$(dirname "${0}")" && pwd)"}
++distrobox_entrypoint_path="${DISTROBOX_BIN_DIR}/distrobox-init"
++distrobox_export_path="${DISTROBOX_BIN_DIR}/distrobox-export"
++distrobox_genentry_path="${DISTROBOX_BIN_DIR}/distrobox-generate-entry"
++distrobox_hostexec_path="${DISTROBOX_BIN_DIR}/distrobox-host-exec"
+ # In case some of the scripts are not in the same path as create, let's search
+ # in PATH for them.
+ [ ! -e "${distrobox_entrypoint_path}" ] && distrobox_entrypoint_path="$(command -v distrobox-init)"
+--- a/usr/bin/distrobox-enter
++++ b/usr/bin/distrobox-enter
+@@ -100,7 +100,8 @@
+ # We're not using "realpath" here so that symlinks are not resolved this way
+ # "realpath" would break situations like Nix or similar symlink based package
+ # management.
+-distrobox_enter_path="$(cd "$(dirname "$0")" && pwd)/distrobox-enter"
++DISTROBOX_BIN_DIR=${DISTROBOX_BIN_DIR:-"$(cd "$(dirname "$0")" && pwd)"}
++distrobox_enter_path="${DISTROBOX_BIN_DIR}/distrobox-enter"
+ dryrun=0
+ headless=0
+ # If the user runs this script as root in a login shell, set rootful=1.
+--- a/usr/bin/distrobox-generate-entry
++++ b/usr/bin/distrobox-generate-entry
+@@ -291,7 +291,8 @@
+ mkdir -p "${XDG_DATA_HOME:-${HOME}/.local/share}/applications"
+ mkdir -p "${XDG_DATA_HOME:-${HOME}/.local/share}/icons/distrobox"
+ 
+-distrobox_path="$(dirname "$(realpath "${0}")")"
++DISTROBOX_BIN_DIR=${DISTROBOX_BIN_DIR:-"$(dirname "$(realpath "${0}")")"}
++distrobox_path="${DISTROBOX_BIN_DIR}"
+ entry_name="$(echo "${container_name}" | cut -c1 | tr "[:lower:]" "[:upper:]")$(echo "${container_name}" | cut -c2-)"
+ 
+ if [ "${icon}" = "auto" ]; then
