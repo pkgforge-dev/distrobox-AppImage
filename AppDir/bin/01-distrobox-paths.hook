@@ -43,7 +43,7 @@ drop_saved_ns() {
 	tr '\0' '\n' < /proc/"$_pid"/environ 2>/dev/null | grep -qx '_PODMAN_PAUSE=1' || return 0
 
 	# that namespace already has this launch's mount
-	[ -e /proc/"$_pid"/root"$APPDIR"/AppRun ] || return 0
+	[ ! -e /proc/"$_pid"/root"$APPDIR"/AppRun ] || return 0
 
 	for _p in /proc/[0-9]*; do
 		_p=${_p#/proc/}
