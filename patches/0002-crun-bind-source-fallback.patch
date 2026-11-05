@@ -65,7 +65,7 @@
  
        if ((extra_flags & OPTION_COPY_SYMLINK) && (extra_flags & (OPTION_SRC_NOFOLLOW | OPTION_DEST_NOFOLLOW)))
          return crun_make_error (err, 0, "`copy-symlink` is mutually exclusive with `src-nofollow` and `dest-nofollow`");
-@@ -2947,18 +2989,38 @@
+@@ -2947,18 +2989,42 @@
        else
          ret = get_file_type (&src_mode, (extra_flags & (OPTION_SRC_NOFOLLOW | OPTION_COPY_SYMLINK)) ? true : false, path);
        if (UNLIKELY (ret < 0))
@@ -86,7 +86,11 @@
 +                  ret = 0;
 +                }
 +              else
-+                ret = -1;
++                {
++                  /* report the path that was actually tried */
++                  path = fallback;
++                  ret = -1;
++                }
 +            }
 +          if (UNLIKELY (ret < 0))
 +            return crun_make_error (err, errno, "cannot stat `%s`", path);
@@ -107,7 +111,7 @@
              }
            ret = get_bind_mount (bind_dirfd, bind_source, true, true, extra_flags & OPTION_SRC_NOFOLLOW, MS_PRIVATE, err);
            if (UNLIKELY (ret < 0))
-@@ -3030,7 +3092,7 @@
+@@ -3030,7 +3096,7 @@
          }
      }
  
