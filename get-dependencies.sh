@@ -6,11 +6,38 @@ ARCH=$(uname -m)
 
 echo "Installing package dependencies..."
 echo "---------------------------------------------------------------"
-pacman -Syu --noconfirm distrobox podman
+pacman -Syu --noconfirm \
+	autoconf   \
+	automake   \
+	crun       \
+	distrobox  \
+	go-md2man  \
+	libtool    \
+	podman     \
+	python
 
 echo "Patching distrobox..."
 echo "---------------------------------------------------------------"
 patch -d / -p1 --forward --no-backup-if-mismatch < ./distrobox-path.patch
+
+echo "Building crun..."
+echo "---------------------------------------------------------------"
+git clone https://github.com/containers/crun ./crun
+
+# crun still ships v0.3-style tags, which sort above 1.30.1 with v:refname
+git -C ./crun fetch --tags origin
+CRUN_TAG=$(git -C ./crun tag --sort=-v:refname | grep -E '^[0-9]+\.' | head -1)
+git -C ./crun checkout "$CRUN_TAG"
+git -C ./crun submodule update --init --recursive
+
+patch -d ./crun -p1 --forward --no-backup-if-mismatch < ./patches/crun-bind-source-fallback.patch
+cd ./crun
+./autogen.sh
+./configure --disable-static --disable-criu
+make -j"$(nproc)"
+
+cp -f ./crun /usr/bin/crun
+chmod +x /usr/bin/crun
 
 #echo "Installing debloated packages..."
 #echo "---------------------------------------------------------------"

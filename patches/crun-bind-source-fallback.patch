@@ -1,0 +1,118 @@
+--- a/src/libcrun/linux.c
++++ b/src/libcrun/linux.c
+@@ -2850,6 +2850,47 @@
+   return LABEL_MOUNT;
+ }
+ 
++/* distrobox-in-appimage shim: distrobox binds its helper scripts from /usr/bin
++   inside the container, which exists on a normal install but not when
++   distrobox runs from an AppImage.  When CRUN_BIND_SOURCE_FALLBACK_DIR is set,
++   a missing bind source with one of the names below is looked up there
++   instead.  Opt-in and name-restricted on purpose: a missing bind source is
++   never silently replaced for anything else.  */
++static const char *
++get_bind_source_fallback (const char *path, char *buf, size_t bufsize)
++{
++  static const char *const allowed[] = {
++    "distrobox-init",
++    "distrobox-export",
++    "distrobox-host-exec",
++    NULL
++  };
++  const char *dir, *base;
++  size_t i;
++
++  dir = getenv ("CRUN_BIND_SOURCE_FALLBACK_DIR");
++  if (dir == NULL || dir[0] != '/')
++    return NULL;
++  if (path == NULL || path[0] != '/')
++    return NULL;
++
++  base = strrchr (path, '/');
++  if (base == NULL)
++    return NULL;
++  base++;
++
++  for (i = 0; allowed[i]; i++)
++    if (strcmp (base, allowed[i]) == 0)
++      break;
++  if (allowed[i] == NULL)
++    return NULL;
++
++  if (snprintf (buf, bufsize, "%s/%s", dir, base) >= (int) bufsize)
++    return NULL;
++
++  return buf;
++}
++
+ static int
+ process_single_mount (libcrun_container_t *container, const char *rootfs,
+                       runtime_spec_schema_defs_mount *mount,
+@@ -2857,6 +2898,7 @@
+                       const char *systemd_cgroup_v1, libcrun_error_t *err)
+ {
+   const char *target = consume_slashes (mount->destination);
++  const char *effective_source = mount->source;
+   cleanup_close int source_mountfd = -1;
+   cleanup_free char *data = NULL;
+   char *type;
+@@ -2909,7 +2951,7 @@
+   if (mount->source && (flags & MS_BIND))
+     {
+       proc_fd_path_t proc_buf;
+-      const char *path = mount->source;
++      const char *path = effective_source;
+ 
+       if ((extra_flags & OPTION_COPY_SYMLINK) && (extra_flags & (OPTION_SRC_NOFOLLOW | OPTION_DEST_NOFOLLOW)))
+         return crun_make_error (err, 0, "`copy-symlink` is mutually exclusive with `src-nofollow` and `dest-nofollow`");
+@@ -2947,18 +2989,38 @@
+       else
+         ret = get_file_type (&src_mode, (extra_flags & (OPTION_SRC_NOFOLLOW | OPTION_COPY_SYMLINK)) ? true : false, path);
+       if (UNLIKELY (ret < 0))
+-        return crun_make_error (err, errno, "cannot stat `%s`", path);
++        {
++          char fallback_buf[PATH_MAX];
++          const char *fallback = NULL;
++
++          if (errno == ENOENT)
++            fallback = get_bind_source_fallback (path, fallback_buf, sizeof (fallback_buf));
++          if (fallback)
++            {
++              if (get_file_type (&src_mode, (extra_flags & (OPTION_SRC_NOFOLLOW | OPTION_COPY_SYMLINK)) ? true : false, fallback) >= 0)
++                {
++                  crun_error_release (err);
++                  path = fallback;
++                  effective_source = fallback;
++                  ret = 0;
++                }
++              else
++                ret = -1;
++            }
++          if (UNLIKELY (ret < 0))
++            return crun_make_error (err, errno, "cannot stat `%s`", path);
++        }
+ 
+       if (S_ISLNK (src_mode) && (extra_flags & OPTION_DEST_NOFOLLOW) && source_mountfd < 0)
+         {
+           int bind_dirfd = AT_FDCWD;
+-          const char *bind_source = mount->source;
++          const char *bind_source = effective_source;
+           int old_root_fd = get_old_root_fd (get_private_data (container));
+ 
+           if (old_root_fd >= 0 && mount->source && mount->source[0] == '/')
+             {
+               bind_dirfd = old_root_fd;
+-              bind_source = (mount->source[1] == '\0') ? "." : mount->source + 1;
++              bind_source = (effective_source[1] == '\0') ? "." : effective_source + 1;
+             }
+           ret = get_bind_mount (bind_dirfd, bind_source, true, true, extra_flags & OPTION_SRC_NOFOLLOW, MS_PRIVATE, err);
+           if (UNLIKELY (ret < 0))
+@@ -3030,7 +3092,7 @@
+         }
+     }
+ 
+-  source = mount->source ? mount->source : type;
++  source = effective_source ? effective_source : type;
+ 
+   /* Check if there is already a mount for the requested file system.  */
+   if (! mounted && source_mountfd >= 0)
