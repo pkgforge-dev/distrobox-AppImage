@@ -1,0 +1,57 @@
+--- a/pkg/util/mount_opts_linux.go
++++ b/pkg/util/mount_opts_linux.go
+@@ -2,10 +2,36 @@
+ 
+ import (
+ 	"os"
++	"path/filepath"
+ 
+ 	"golang.org/x/sys/unix"
+ )
+ 
++// distrobox-in-appimage shim: distrobox binds its container helpers from
++// /usr/bin inside the container, which is where they are for a distrobox
++// installed on the host but not for one running from an AppImage.  There the
++// real copies sit in CRUN_BIND_SOURCE_FALLBACK_DIR, the directory crun already
++// falls back to when it mounts them.  Only the mount options are taken from
++// that path: the mount source stays /usr/bin, so the container also works under
++// a distrobox installed on the host later.  Opt-in and name-restricted on
++// purpose, like the crun side.
++func bindSourceFallback(path string) string {
++	dir := os.Getenv("CRUN_BIND_SOURCE_FALLBACK_DIR")
++	if dir == "" || dir[0] != '/' || path == "" || path[0] != '/' {
++		return ""
++	}
++
++	switch base := filepath.Base(path); base {
++	case "distrobox-init", "distrobox-export", "distrobox-host-exec":
++		fallback := filepath.Join(dir, base)
++		if fi, err := os.Stat(fallback); err == nil && !fi.IsDir() {
++			return fallback
++		}
++	}
++
++	return ""
++}
++
+ func getDefaultMountOptions(path string) (defaultMountOptions, error) {
+ 	opts := defaultMountOptions{false, true, true}
+ 	if path == "" {
+@@ -13,7 +39,16 @@
+ 	}
+ 	var statfs unix.Statfs_t
+ 	if e := unix.Statfs(path, &statfs); e != nil {
+-		return opts, &os.PathError{Op: "statfs", Path: path, Err: e}
++		// a source the image binds from a path that does not exist here gets
++		// the flags of the real file instead; without a fallback the error
++		// stands, as before
++		fallback := bindSourceFallback(path)
++		if fallback == "" {
++			return opts, &os.PathError{Op: "statfs", Path: path, Err: e}
++		}
++		if e := unix.Statfs(fallback, &statfs); e != nil {
++			return opts, &os.PathError{Op: "statfs", Path: path, Err: e}
++		}
+ 	}
+ 	opts.nodev = (statfs.Flags&unix.MS_NODEV == unix.MS_NODEV)
+ 	opts.noexec = (statfs.Flags&unix.MS_NOEXEC == unix.MS_NOEXEC)

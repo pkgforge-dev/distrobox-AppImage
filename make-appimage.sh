@@ -18,7 +18,7 @@ quick-sharun \
 	/usr/bin/compel     \
 	/usr/bin/criu       \
 	/usr/bin/crun       \
-	/usr/bin/podman*    \
+	/usr/bin/podman     \
 	/usr/lib/podman
 
 # Turn AppDir into AppImage
