@@ -18,7 +18,7 @@ pacman -Syu --noconfirm \
 
 echo "Patching distrobox..."
 echo "---------------------------------------------------------------"
-patch -d / -p1 --forward --no-backup-if-mismatch < ./distrobox-path.patch
+patch -d / -p1 --forward --no-backup-if-mismatch < ./patches/0001-distrobox-path.patch
 
 echo "Building crun..."
 echo "---------------------------------------------------------------"
@@ -30,7 +30,7 @@ CRUN_TAG=$(git -C ./crun tag --sort=-v:refname | grep -E '^[0-9]+\.' | head -1)
 git -C ./crun checkout "$CRUN_TAG"
 git -C ./crun submodule update --init --recursive
 
-patch -d ./crun -p1 --forward --no-backup-if-mismatch < ./patches/crun-bind-source-fallback.patch
+patch -d ./crun -p1 --forward --no-backup-if-mismatch < ./patches/0002-crun-bind-source-fallback.patch
 cd ./crun
 ./autogen.sh
 ./configure --disable-static --disable-criu
