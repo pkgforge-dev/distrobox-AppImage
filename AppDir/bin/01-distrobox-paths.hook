@@ -10,11 +10,11 @@ cp -f "$APPDIR"/bin/distrobox-init "$APPDIR"/bin/distrobox-export \
 	"$APPDIR"/bin/distrobox-host-exec "$DISTROBOX_BIN_DIR"
 
 # distrobox binds its container helpers from /usr/bin, which only exists for a
-# distrobox installed on the host. crun is patched to look here instead, and
-# only for those three names. These copies are a fallback for the AppImage
-# alone: they are never the path recorded in a container, and they have to be
-# real files, since crun reads them from inside the container's namespace where
-# the AppImage mount is not reachable
+# distrobox installed on the host. Podman and crun (patches 0002 and 0003) both
+# read this dir for those three names when /usr/bin has them missing: podman
+# takes the mount options and crun mounts the copy at start. Real files outside
+# the mount on purpose, since crun reads them from inside the container's
+# namespace where the AppImage mount is not reachable
 export CRUN_BIND_SOURCE_FALLBACK_DIR="$DISTROBOX_BIN_DIR"
 
 # a copy of these cannot find podman from a desktop entry, launch the AppImage
