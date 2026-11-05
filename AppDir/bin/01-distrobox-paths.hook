@@ -36,16 +36,23 @@ fi
 # netavark. Drop it, unless containers still live in it
 drop_saved_ns() {
 	_run=${XDG_RUNTIME_DIR:-/nonexistent}
+	_pid_file="$_run"/libpod/tmp/pause.pid
+
+	# nothing has saved a namespace yet, which is the normal state until a
+	# rootless podman runs for the first time. Checking for the file keeps the
+	# shell from reporting the failed redirect on every launch
+	[ -f "$_pid_file" ] || return 0
 
 	# podman writes the pid with no trailing newline, so read returns non-zero
 	# even when it read it: ignore the status and check the value instead
 	_pid=
-	read -r _pid < "$_run"/libpod/tmp/pause.pid 2>/dev/null || :
+	read -r _pid < "$_pid_file" || :
 	[ -n "$_pid" ] || return 0
 
 	# a recycled pid must never be killed: the pause process is the one with
 	# _PODMAN_PAUSE=1 in its environ
-	tr '\0' '\n' < /proc/"$_pid"/environ 2>/dev/null | grep -qx '_PODMAN_PAUSE=1' || return 0
+	[ -r /proc/"$_pid"/environ ] || return 0
+	tr '\0' '\n' < /proc/"$_pid"/environ | grep -qx '_PODMAN_PAUSE=1' || return 0
 
 	# that namespace already has this launch's mount
 	[ ! -e /proc/"$_pid"/root"$APPDIR"/AppRun ] || return 0
