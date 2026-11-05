@@ -10,8 +10,13 @@
 set -u
 
 image=$(readlink -f "${1:?usage: $0 AppImage}")
-command -v podman >/dev/null || { echo "SKIP: no host podman"; exit 77; }
-sudo -n true || { echo "SKIP: sudo needs a password"; exit 77; }
+if ! command -v podman 1>/dev/null; then
+	>&2 echo "SKIP: no host podman"
+	exit 77
+elif ! sudo -n true; then
+	>&2 echo "SKIP: sudo needs a password"
+	exit 77
+fi
 
 work=$(mktemp -d)
 export XDG_RUNTIME_DIR=$work/run
@@ -30,7 +35,10 @@ cleanup() {
 trap cleanup EXIT
 
 podman ps -a < /dev/null > /dev/null 2>&1
-[ -r "$XDG_RUNTIME_DIR"/libpod/tmp/pause.pid ] || { echo "FAIL: host podman saved no namespace"; exit 1; }
+if [ ! -r "$XDG_RUNTIME_DIR"/libpod/tmp/pause.pid ]; then
+	>&2 echo "FAIL: host podman saved no namespace"
+	exit 1
+fi
 
 setsid sudo -n unshare -m --propagation private \
 	setpriv --reuid="$(id -u)" --regid="$(id -g)" --clear-groups \
@@ -38,13 +46,17 @@ setsid sudo -n unshare -m --propagation private \
 	"$image" list < /dev/null > "$work"/out 2>&1 &
 
 for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-	grep -q -e '^ID ' -e '^Error' "$work"/out 2>/dev/null && break
-	sleep 1
+	if grep -q -e '^ID ' -e '^Error' "$work"/out 2>/dev/null; then
+		break
+	else
+		sleep 1
+	fi
 done
 
 if grep -q '^ID ' "$work"/out; then
 	echo "PASS: list works with a saved namespace that lacks the mount"
 else
-	echo "FAIL:"; cat "$work"/out
+	>&2 echo "FAIL:"
+	>&2 cat "$work"/out
 	exit 1
 fi
