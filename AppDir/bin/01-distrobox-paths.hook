@@ -32,7 +32,11 @@ fi
 drop_saved_ns() {
 	_run=${XDG_RUNTIME_DIR:-/nonexistent}
 
-	if ! _pid=$(cat "$_run"/libpod/tmp/pause.pid 2>/dev/null); then
+	# podman writes the pid with no trailing newline, so read returns non-zero
+	# even when it read it: ignore the status and check the value instead
+	_pid=
+	read -r _pid < "$_run"/libpod/tmp/pause.pid 2>/dev/null || :
+	if [ -z "$_pid" ]; then
 		return 0
 	fi
 
