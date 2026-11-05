@@ -16,9 +16,7 @@ quick-sharun \
 	/usr/bin/distrobox* \
 	/usr/bin/conmon     \
 	/usr/bin/compel     \
-	/usr/bin/crit       \
 	/usr/bin/criu       \
-	/usr/bin/criu-ns    \
 	/usr/bin/crun       \
 	/usr/bin/podman*    \
 	/usr/lib/podman
