@@ -36,20 +36,14 @@ drop_saved_ns() {
 	# even when it read it: ignore the status and check the value instead
 	_pid=
 	read -r _pid < "$_run"/libpod/tmp/pause.pid 2>/dev/null || :
-	if [ -z "$_pid" ]; then
-		return 0
-	fi
+	[ -n "$_pid" ] || return 0
 
 	# a recycled pid must never be killed: the pause process is the one with
 	# _PODMAN_PAUSE=1 in its environ
-	if ! tr '\0' '\n' < /proc/"$_pid"/environ 2>/dev/null | grep -qx '_PODMAN_PAUSE=1'; then
-		return 0
-	fi
+	tr '\0' '\n' < /proc/"$_pid"/environ 2>/dev/null | grep -qx '_PODMAN_PAUSE=1' || return 0
 
 	# that namespace already has this launch's mount
-	if [ -e /proc/"$_pid"/root"$APPDIR"/AppRun ]; then
-		return 0
-	fi
+	[ -e /proc/"$_pid"/root"$APPDIR"/AppRun ] || return 0
 
 	for _p in /proc/[0-9]*; do
 		_p=${_p#/proc/}
