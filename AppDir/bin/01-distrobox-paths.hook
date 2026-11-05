@@ -17,8 +17,11 @@ for f in distrobox distrobox-enter; do
 done
 
 # podman must read its config from outside the mount too: $APPDIR changes on
-# every update, and a config path that is not there stops every podman call
+# every update, and a config path that is not there stops every podman call.
+# @APPDIR@ is expanded here so the conmon and crun paths always point at the
+# mount of this launch
 if [ -f "$APPDIR"/etc/containers/containers.conf ]; then
-	cp -f "$APPDIR"/etc/containers/containers.conf "$DISTROBOX_BIN_DIR"/containers.conf
+	sed "s|@APPDIR@|$APPDIR|g" "$APPDIR"/etc/containers/containers.conf \
+		> "$DISTROBOX_BIN_DIR"/containers.conf
 	export CONTAINERS_CONF_OVERRIDE="$DISTROBOX_BIN_DIR"/containers.conf
 fi
