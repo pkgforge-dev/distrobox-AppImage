@@ -106,6 +106,7 @@ git clone https://github.com/containers/podman ./podman-src && (
 	git checkout "$PODMAN_TAG"
 
 	git apply -p1 ../patches/0004-podman-bind-source-fallback.patch
+	git apply -p1 ../patches/0005-podman-prefer-bundled-helpers.patch
 
 	# the flags of the distribution build, and the tags that matter for it: a
 	# missing one is silent, and seccomp, sqlite or systemd cannot be dropped

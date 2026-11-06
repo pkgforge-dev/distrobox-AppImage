@@ -1,0 +1,77 @@
+--- a/vendor/go.podman.io/common/pkg/config/config.go
++++ b/vendor/go.podman.io/common/pkg/config/config.go
+@@ -1263,6 +1263,15 @@ func (c *Config) FindInitBinary() (string, error) {
+ 	if c.Engine.InitPath != "" {
+ 		return c.Engine.InitPath, nil
+ 	}
++	// distrobox-in-appimage shim: the catatonit next to this podman wins over
++	// the fixed path, which on a host with podman installed is the host's copy
++	// and not the one the image ships
++	if bindir := findBindir(); bindir != "" {
++		initPath := filepath.Join(bindir, defaultInitName)
++		if err := fileutils.Exists(initPath); err == nil {
++			return initPath, nil
++		}
++	}
+ 	// keep old default working to guarantee backwards compat
+ 	if err := fileutils.Exists(DefaultInitPath); err == nil {
+ 		return DefaultInitPath, nil
+--- a/vendor/go.podman.io/common/pkg/config/default.go
++++ b/vendor/go.podman.io/common/pkg/config/default.go
+@@ -471,6 +471,7 @@ func defaultEngineConfig() (*EngineConfig, error) {
+ 		"/usr/local/sbin/conmonrs",
+ 		"/run/current-system/sw/bin/conmonrs",
+ 	})
++	preferBindir(c)
+ 	c.PullPolicy = DefaultPullPolicy
+ 	c.RuntimeSupportsJSON.Set([]string{
+ 		"crun",
+@@ -692,3 +693,36 @@ func getDefaultSSHConfig() string {
+ func getDefaultMachineUser() string {
+ 	return "core"
+ }
++
++// preferBindir puts the directory of this podman in front of the helper,
++// conmon and OCI runtime paths, and points an absolute runtime at the bundled
++// copy of the same name. distrobox-in-appimage shim: an AppImage carries its
++// own crun, conmon and helpers, and a host crun older than this podman rejects
++// the OCI spec version it writes, so the bundled ones have to win over
++// /usr/bin. Called again after the config files are merged, so a containers.conf
++// cannot put the host's copies back in front.
++func preferBindir(e *EngineConfig) {
++	bindir := findBindir()
++	if bindir == "" {
++		return
++	}
++	if dirs := e.HelperBinariesDir.Get(); len(dirs) == 0 || dirs[0] != bindir {
++		e.HelperBinariesDir.Set(append([]string{bindir}, dirs...))
++	}
++	conmon := filepath.Join(bindir, "conmon")
++	if paths := e.ConmonPath.Get(); len(paths) == 0 || paths[0] != conmon {
++		e.ConmonPath.Set(append([]string{conmon}, paths...))
++	}
++	for name, paths := range e.OCIRuntimes {
++		bundled := filepath.Join(bindir, name)
++		if len(paths) == 0 || paths[0] != bundled {
++			e.OCIRuntimes[name] = append([]string{bundled}, paths...)
++		}
++	}
++	if filepath.IsAbs(e.OCIRuntime) {
++		bundled := filepath.Join(bindir, filepath.Base(e.OCIRuntime))
++		if _, err := os.Stat(bundled); err == nil {
++			e.OCIRuntime = bundled
++		}
++	}
++}
+--- a/vendor/go.podman.io/common/pkg/config/new.go
++++ b/vendor/go.podman.io/common/pkg/config/new.go
+@@ -80,6 +80,9 @@ func newLocked(options *Options, file *configfile.File) (*Config, error) {
+ 	}
+ 	config.loadedModules = file.Modules
+ 
++	// the config files may have replaced the paths preferBindir put in front
++	preferBindir(&config.Engine)
++
+ 	config.addCAPPrefix()
+ 
+ 	if err := config.Validate(); err != nil {

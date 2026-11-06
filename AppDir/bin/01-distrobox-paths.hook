@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# the wrappers and containers.conf below live outside $APPDIR, which changes on
-# every update: exported .desktop entries point at them
+# the wrappers below live outside $APPDIR, which changes on every update:
+# exported .desktop entries point at them
 
 export DISTROBOX_BIN_DIR="$DATADIR"/distrobox-appimage
 
@@ -22,21 +22,6 @@ for f in distrobox distrobox-enter; do
 	printf '#!/bin/sh\nexec "${APPIMAGE:?}" "${0##*/}" "$@"\n' > "$DISTROBOX_BIN_DIR/$f"
 	chmod +x "$DISTROBOX_BIN_DIR/$f"
 done
-
-# podman must read its config from outside the mount too: $APPDIR changes on
-# every update, and a config path that is not there stops every podman call
-if [ -f "$APPDIR"/etc/containers/containers.conf ]; then
-	{
-		cat "$APPDIR"/etc/containers/containers.conf
-		# podman takes the OCI runtime from its runtimes table, not from PATH,
-		# and the compiled default is /usr/bin/crun: a host crun older than the
-		# podman in here (Ubuntu 24.04 ships 1.14) then fails every container
-		# with "unknown version specified". Point it at the crun this image
-		# ships, which is the one that matches this podman
-		printf 'runtime = "%s/bin/crun"\n' "$APPDIR"
-	} > "$DISTROBOX_BIN_DIR"/containers.conf
-	export CONTAINERS_CONF_OVERRIDE="$DISTROBOX_BIN_DIR"/containers.conf
-fi
 
 # rootless podman joins the user and mount namespace saved by an earlier run
 # (libpod/tmp/pause.pid) before any of its own code runs, so a namespace saved
