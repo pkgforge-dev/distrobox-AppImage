@@ -42,6 +42,7 @@ git clone https://github.com/89luca89/distrobox ./distrobox-src && (
 	echo "$DISTROBOX_TAG" > ~/version
 
 	git apply -p1 ../patches/0001-distrobox-path.patch
+	git apply -p1 ../patches/0002-distrobox-cgroup-kill.patch
 	./install --prefix /usr
 )
 
@@ -56,7 +57,7 @@ git clone https://github.com/containers/crun ./crun && (
 	git checkout "$CRUN_TAG"
 	git submodule update --init --recursive
 
-	git apply -p1 ../patches/0002-crun-bind-source-fallback.patch
+	git apply -p1 ../patches/0003-crun-bind-source-fallback.patch
 	./autogen.sh
 	./configure --disable-static --disable-criu --enable-embedded-blake3
 	make -j"$(nproc)"
@@ -104,7 +105,7 @@ git clone https://github.com/containers/podman ./podman-src && (
 	PODMAN_TAG=$(git tag --sort=-v:refname | grep -vi 'rc\|alpha' | head -1)
 	git checkout "$PODMAN_TAG"
 
-	git apply -p1 ../patches/0003-podman-bind-source-fallback.patch
+	git apply -p1 ../patches/0004-podman-bind-source-fallback.patch
 
 	# the flags of the distribution build, and the tags that matter for it: a
 	# missing one is silent, and seccomp, sqlite or systemd cannot be dropped
