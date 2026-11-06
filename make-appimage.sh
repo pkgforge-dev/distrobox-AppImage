@@ -11,15 +11,25 @@ export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}
 export DESKTOP=DUMMY
 export MAIN_BIN=distrobox
 
+# the distrobox commands are shell scripts, and tracing them follows whatever
+# host tool they exec (curl, sudo, the shell itself), which drags those tools'
+# libraries into the image. Nothing we ship dlopens anything, so only the ELF
+# helpers are traced
+export STRACE_BINARY="podman crun conmon catatonit netavark aardvark-dns rootlessport"
+
 # Deploy dependencies
 quick-sharun \
-	/usr/bin/distrobox* \
-	/usr/bin/conmon     \
-	/usr/bin/compel     \
-	/usr/bin/criu       \
-	/usr/bin/crun       \
-	/usr/bin/podman     \
-	/usr/lib/podman
+	/usr/bin/distrobox*           \
+	/usr/bin/catatonit            \
+	/usr/bin/conmon               \
+	/usr/bin/crun                 \
+	/usr/bin/curl                 \
+	/usr/bin/passt                \
+	/usr/bin/pasta                \
+	/usr/bin/podman               \
+	/usr/lib/podman/aardvark-dns  \
+	/usr/lib/podman/netavark      \
+	/usr/lib/podman/rootlessport
 
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
