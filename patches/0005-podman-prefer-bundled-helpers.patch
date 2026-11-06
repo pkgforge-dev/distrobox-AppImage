@@ -1,14 +1,15 @@
 --- a/vendor/go.podman.io/common/pkg/config/config.go
 +++ b/vendor/go.podman.io/common/pkg/config/config.go
-@@ -1263,6 +1263,15 @@ func (c *Config) FindInitBinary() (string, error) {
+@@ -1263,6 +1263,16 @@ func (c *Config) FindInitBinary() (string, error) {
  	if c.Engine.InitPath != "" {
  		return c.Engine.InitPath, nil
  	}
-+	// distrobox-in-appimage shim: the catatonit next to this podman wins over
-+	// the fixed path, which on a host with podman installed is the host's copy
-+	// and not the one the image ships
-+	if bindir := findBindir(); bindir != "" {
-+		initPath := filepath.Join(bindir, defaultInitName)
++	// distrobox-in-appimage shim: catatonit runs inside the container, which
++	// cannot read the AppImage mount, so the copy the hook keeps outside the
++	// mount wins over the host's /usr/bin/catatonit and over the sharun
++	// hardlink in bin
++	if dir := os.Getenv("CRUN_BIND_SOURCE_FALLBACK_DIR"); dir != "" && dir[0] == '/' {
++		initPath := filepath.Join(dir, defaultInitName)
 +		if err := fileutils.Exists(initPath); err == nil {
 +			return initPath, nil
 +		}

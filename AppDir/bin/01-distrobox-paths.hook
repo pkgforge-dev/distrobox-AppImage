@@ -9,6 +9,10 @@ mkdir -p "$DISTROBOX_BIN_DIR"
 cp -f "$APPDIR"/bin/distrobox-init "$APPDIR"/bin/distrobox-export \
 	"$APPDIR"/bin/distrobox-host-exec "$DISTROBOX_BIN_DIR"
 
+# catatonit runs as pid 1 inside the container, which cannot read the mount, so
+# podman needs a real file outside it; the image ships the static binary in bin
+cp -f "$APPDIR"/bin/catatonit "$DISTROBOX_BIN_DIR"/catatonit
+
 # distrobox binds its container helpers from /usr/bin, which only exists for a
 # distrobox installed on the host. Podman and crun (patches 0002 and 0003) both
 # read this dir for those three names when /usr/bin has them missing: podman

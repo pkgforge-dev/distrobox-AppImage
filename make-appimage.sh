@@ -30,6 +30,15 @@ quick-sharun \
 	/usr/lib/podman/netavark      \
 	/usr/lib/podman/rootlessport
 
+# catatonit runs as pid 1 inside the container, which cannot read the mount, so
+# podman needs the binary itself rather than the sharun hardlink
+rm -f AppDir/bin/catatonit
+mv AppDir/shared/bin/catatonit AppDir/bin/catatonit
+if ! file AppDir/bin/catatonit | grep -q 'statically linked'; then
+	echo "catatonit must be static, a container cannot read the mount"
+	exit 1
+fi
+
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
 
