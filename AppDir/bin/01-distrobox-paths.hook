@@ -26,7 +26,15 @@ done
 # podman must read its config from outside the mount too: $APPDIR changes on
 # every update, and a config path that is not there stops every podman call
 if [ -f "$APPDIR"/etc/containers/containers.conf ]; then
-	cp -f "$APPDIR"/etc/containers/containers.conf "$DISTROBOX_BIN_DIR"/containers.conf
+	{
+		cat "$APPDIR"/etc/containers/containers.conf
+		# podman takes the OCI runtime from its runtimes table, not from PATH,
+		# and the compiled default is /usr/bin/crun: a host crun older than the
+		# podman in here (Ubuntu 24.04 ships 1.14) then fails every container
+		# with "unknown version specified". Point it at the crun this image
+		# ships, which is the one that matches this podman
+		printf 'runtime = "%s/bin/crun"\n' "$APPDIR"
+	} > "$DISTROBOX_BIN_DIR"/containers.conf
 	export CONTAINERS_CONF_OVERRIDE="$DISTROBOX_BIN_DIR"/containers.conf
 fi
 
