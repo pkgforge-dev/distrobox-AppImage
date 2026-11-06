@@ -11,13 +11,15 @@ pacman -Syu --noconfirm \
 	automake    \
 	btrfs-progs \
 	crun        \
+	curl        \
 	distrobox   \
 	go          \
 	go-md2man   \
 	gpgme       \
 	libtool     \
+	mbedtls     \
+	passt       \
 	podman      \
-	python      \
 	shadow      \
 	sqlite      \
 	systemd
@@ -47,10 +49,41 @@ git clone https://github.com/containers/crun ./crun && (
 
 	git apply -p1 ../patches/0002-crun-bind-source-fallback.patch
 	./autogen.sh
-	./configure --disable-static --disable-criu
+	./configure --disable-static --disable-criu --enable-embedded-blake3
 	make -j"$(nproc)"
 	cp -f ./crun /usr/bin/crun
 	chmod +x /usr/bin/crun
+)
+
+echo "Building curl..."
+echo "---------------------------------------------------------------"
+git clone https://github.com/curl/curl ./curl-src && (
+	cd ./curl-src
+
+	git fetch --tags origin
+	CURL_TAG=$(git tag --sort=-v:refname | grep -vi 'rc\|alpha\|tiny-curl' | head -1)
+	git checkout "$CURL_TAG"
+
+	# mbedtls is linked in statically so the image does not have to carry
+	# openssl, while glibc stays dynamic like everything else here.  Only the
+	# .a files go into the prefix, so the linker cannot pick the shared ones
+	mkdir -p ../mbedtls-static/lib
+	ln -sf /usr/lib/libmbedtls.a /usr/lib/libmbedx509.a \
+		/usr/lib/libmbedcrypto.a ../mbedtls-static/lib/
+
+	autoreconf -fi
+	./configure --disable-shared --enable-static \
+		--with-mbedtls="$PWD/../mbedtls-static" \
+		--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt \
+		--without-zlib --without-brotli --without-zstd --without-libpsl \
+		--without-libidn2 --without-libssh2 --without-nghttp2 \
+		--disable-ldap --disable-ldaps --disable-ftp --disable-file \
+		--disable-rtsp --disable-dict --disable-telnet --disable-tftp \
+		--disable-pop3 --disable-imap --disable-smtp --disable-gopher \
+		--disable-mqtt --disable-ntlm --disable-manual --disable-docs
+	make -j"$(nproc)"
+	cp -f ./src/curl /usr/bin/curl
+	chmod +x /usr/bin/curl
 )
 
 echo "Building podman..."
