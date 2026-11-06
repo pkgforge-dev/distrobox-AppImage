@@ -1,5 +1,5 @@
---- a/usr/bin/distrobox-create
-+++ b/usr/bin/distrobox-create
+--- a/distrobox-create
++++ b/distrobox-create
 @@ -92,16 +92,17 @@
  # We're not using "realpath" here so that symlinks are not resolved this way
  # "realpath" would break situations like Nix or similar symlink based package
@@ -26,8 +26,8 @@
  # If the user runs this script as root in a login shell, set rootful=1.
  # There's no need for them to pass the --root flag option in such cases.
  [ "${container_user_uid}" -eq 0 ] && rootful=1 || rootful=0
---- a/usr/bin/distrobox-enter
-+++ b/usr/bin/distrobox-enter
+--- a/distrobox-enter
++++ b/distrobox-enter
 @@ -100,7 +100,8 @@
  # We're not using "realpath" here so that symlinks are not resolved this way
  # "realpath" would break situations like Nix or similar symlink based package
@@ -38,8 +38,8 @@
  dryrun=0
  headless=0
  # If the user runs this script as root in a login shell, set rootful=1.
---- a/usr/bin/distrobox-generate-entry
-+++ b/usr/bin/distrobox-generate-entry
+--- a/distrobox-generate-entry
++++ b/distrobox-generate-entry
 @@ -291,7 +291,8 @@
  mkdir -p "${XDG_DATA_HOME:-${HOME}/.local/share}/applications"
  mkdir -p "${XDG_DATA_HOME:-${HOME}/.local/share}/icons/distrobox"
