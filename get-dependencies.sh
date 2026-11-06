@@ -12,7 +12,6 @@ pacman -Syu --noconfirm \
 	btrfs-progs \
 	crun        \
 	curl        \
-	distrobox   \
 	go          \
 	go-md2man   \
 	gpgme       \
@@ -32,9 +31,19 @@ pacman -Syu --noconfirm \
 #make-aur-package PACKAGENAME
 
 # If the application needs to be manually built that has to be done down here
-echo "Patching distrobox..."
+echo "Building distrobox..."
 echo "---------------------------------------------------------------"
-patch -d / -p1 --forward --no-backup-if-mismatch < ./patches/0001-distrobox-path.patch
+git clone https://github.com/89luca89/distrobox ./distrobox-src && (
+	cd ./distrobox-src
+
+	git fetch --tags origin
+	DISTROBOX_TAG=$(git tag --sort=-v:refname | grep -vi 'rc\|alpha' | head -1)
+	git checkout "$DISTROBOX_TAG"
+	echo "$DISTROBOX_TAG" > ~/version
+
+	git apply -p1 ../patches/0001-distrobox-path.patch
+	./install --prefix /usr
+)
 
 echo "Building crun..."
 echo "---------------------------------------------------------------"
